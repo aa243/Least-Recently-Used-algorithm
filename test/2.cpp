@@ -7,7 +7,7 @@ BOOM :)
 #include <string>
 // if this is 1, output yes or no
 //otherwise, output the exact num
-#define STATUS 0
+#define STATUS 1
 
 std::string c[]={
     "   pass!",
