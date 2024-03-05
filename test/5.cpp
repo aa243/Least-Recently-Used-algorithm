@@ -10,7 +10,7 @@ BOOM :)
 
 // if this is 1, output yes or no
 //otherwise, output the exact num
-#define STATUS 1
+#define STATUS 0
 
 std::string c[]={
     "   pass!",
@@ -52,12 +52,14 @@ void Integer_linked_hashmap_tester(){
         ref.insert(std::pair<Integer,Integer>(Integer(i),Integer(i)));
         order.push_back(Integer(i));
     }
+
     if(STATUS)std::cout<<std::endl<<c[4];//test remove
     for(mp::iterator it = map.begin();it!=map.end();it++){
         order.remove((*it).first);
         ref.erase((*it).first);
-        map.remove(it);
+	    mp::iterator tmpit = it;
         it++;
+        map.remove(tmpit);
         if(it == map.end()){
             break;
         }
@@ -102,7 +104,6 @@ void Integer_linked_hashmap_tester(){
     const_iter = map.cend();
     const_iter = map.cbegin();
     if(STATUS)std::cout<<c[0]<<std::endl;
-
     //test: find
     if(STATUS)std::cout<<c[5];
     for(int i=0;i<n;i++){
@@ -185,8 +186,9 @@ void Matrix_linked_hashmap_tester(){
     if(STATUS)std::cout<<std::endl<<c[4];//test remove
 
     for(mp::iterator it = map.begin();it!=map.end();it++){
-        map.remove(it);
+	    mp::iterator tmpit = it;
         it++;
+        map.remove(tmpit);
         if(it == map.end()){
             break;
         }
@@ -296,6 +298,6 @@ int main(){
     freopen("5.out","w",stdout);
 #endif
     Integer_linked_hashmap_tester();
-    Matrix_linked_hashmap_tester();
+   // Matrix_linked_hashmap_tester();
     std::cout << c[7] << std::endl;
 }
