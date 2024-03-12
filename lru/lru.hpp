@@ -110,12 +110,12 @@ public:
         {
             if (plist != nullptr) {
                 if (p == nullptr)
-                    std::cerr << "end()++", throw "end()++";
+                    std::cerr << "end()++ ", throw "end()++";
                 iterator temp = *this;
                 p = p->next;
                 return temp;
             } else
-                std::cerr << "Iterator is not bounded to a double_list.", throw "Iterator is not bounded to a double_list.";
+                std::cerr << "Iterator is not bounded to a double_list. ", throw "Iterator is not bounded to a double_list.";
         }
         /**
          * ++iter
@@ -124,11 +124,11 @@ public:
         {
             if (plist != nullptr) {
                 if (p == nullptr)
-                    std::cerr << "end()++", throw "end()++";
+                    std::cerr << "end()++  ", throw "end()++";
                 p = p->next;
                 return *this;
             } else
-                std::cerr << "Iterator is not bounded to a double_list.", throw "Iterator is not bounded to a double_list.";
+                std::cerr << "Iterator is not bounded to a double_list. ", throw "Iterator is not bounded to a double_list.";
         }
         /**
          * iter--
@@ -137,7 +137,7 @@ public:
         {
             if (plist != nullptr) {
                 if (p == plist->pbegin)
-                    p = nullptr, std::cerr << "begin()--", throw "begin()--";
+                    p = nullptr, std::cerr << "begin()--  ", throw "begin()--";
                 iterator temp = *this;
                 if (p != nullptr)
                     p = p->pre;
@@ -145,7 +145,7 @@ public:
                     p = plist->pend;
                 return temp;
             } else
-                std::cerr << "Iterator is not bounded to a double_list.", throw "Iterator is not bounded to a double_list.";
+                std::cerr << "Iterator is not bounded to a double_list.  ", throw "Iterator is not bounded to a double_list.";
         }
         /**
          * --iter
@@ -154,14 +154,14 @@ public:
         {
             if (plist != nullptr) {
                 if (p == plist->pbegin)
-                    p = nullptr, std::cerr << "begin()--", throw "begin()--";
+                    p = nullptr, std::cerr << "begin()--  ", throw "begin()--";
                 if (p != nullptr)
                     p = p->pre;
                 else
                     p = plist->pend;
                 return *this;
             } else
-                std::cerr << "Iterator is not bounded to a double_list.", throw "Iterator is not bounded to a double_list.";
+                std::cerr << "Iterator is not bounded to a double_list.  ", throw "Iterator is not bounded to a double_list.";
         }
         /**
          * if the iter didn't point to a value
@@ -170,7 +170,7 @@ public:
         T &operator*() const
         {
             if (plist == nullptr || p == nullptr)
-                std::cerr << "Iterator point to null but is asked to dereference.", throw "Iterator point to null but is asked to dereference.";
+                std::cerr << "Iterator point to null but is asked to dereference.  ", throw "Iterator point to null but is asked to dereference.";
             return *p->pval;
         }
         /**
@@ -178,8 +178,6 @@ public:
          */
         T *operator->() const noexcept
         {
-            if (plist == nullptr || p == nullptr)
-                std::cerr << "Iterator point to null but is asked to dereference.", throw "Iterator point to null but is asked to dereference.";
             return p->pval;
         }
         bool operator==(const iterator &rhs) const
@@ -229,6 +227,7 @@ public:
             delete pos.p;
         } else if (pos.p == pbegin) {
             pbegin = pos.p->next;
+            pbegin->pre = nullptr;
             delete pos.p;
         } else if (pos.p == pend) {
             pend = pos.p->pre;
@@ -275,7 +274,12 @@ public:
             return;
         --size;
         list_node *temp = pbegin;
-        pbegin = pbegin->next;
+        if (size == 0) {
+            pend = pbegin = nullptr;
+        } else {
+            pbegin = pbegin->next;
+            pbegin->pre = nullptr;
+        }
         delete temp;
     }
     void delete_tail()
@@ -284,7 +288,12 @@ public:
             return;
         --size;
         list_node *temp = pend;
-        pend = pend->pre;
+        if (size == 0) {
+            pend = pbegin = nullptr;
+        } else {
+            pend = pend->pre;
+            pend->next = nullptr;
+        }
         delete temp;
     }
     /**
@@ -310,6 +319,35 @@ public:
      * add whatever you want
      */
 
+    struct map_node {
+        map_node *pt = nullptr;
+        size_t key_hash = 0;
+        value_type *pv = nullptr;
+        map_node(size_t hash, const Key &key, const T &val)
+        {
+            pt = nullptr, key_hash = hash;
+            pv = new value_type(key, val);
+        }
+        map_node(const map_node &other)
+        {
+            pt = other.pt, key_hash = other.key_hash;
+            pv = new value_type(*other.pv);
+        }
+        ~map_node()
+        {
+            pt = nullptr, key_hash = 0;
+            delete pv;
+        }
+    };
+    const int prime[] = {149, 379, 1361, 10067, 100189, 1000159, 10000019, 100000007, 1000000007, 10000000019};
+    int capacity_level = 0, capacity = 149;
+    const int max_level = 9;
+    const double max_ratio = 0.5;
+    int size = 0;
+    map_node **map;
+    Hash h = Hash();
+    Equal e = Equal();
+
     // --------------------------
 
     /**
@@ -318,15 +356,60 @@ public:
      */
     hashmap()
     {
+        map = new map_node *[capacity];
     }
     hashmap(const hashmap &other)
     {
+        capacity_level = other.capacity_level, capacity = other.capacity;
+        h = other.h, e = other.e, size = other.size;
+        map = new map_node *[capacity];
+        for (int i = 0; i < capacity; ++i) {
+            map_node *now = other.map[i];
+            if (now != nullptr) {
+                map[i] = copy(now);
+                now = now->pt;
+            } else
+                continue;
+            map_node *here = map[i];
+            while (now != nullptr) {
+                here->pt = copy(now);
+                here = here->pt;
+                now = now->pt;
+            }
+        }
     }
     ~hashmap()
     {
+        for (int i = 0; i < capacity; ++i) {
+            map_node *now = map[i];
+            while (now != nullptr) {
+                map_node *temp = now;
+                now = now->pt;
+                delete temp;
+            }
+        }
+        delete[] map;
     }
     hashmap &operator=(const hashmap &other)
     {
+        capacity_level = other.capacity_level, capacity = other.capacity;
+        h = other.h, e = other.e, size = other.size;
+        map = new map_node *[capacity];
+        for (int i = 0; i < capacity; ++i) {
+            map_node *now = other.map[i];
+            if (now != nullptr) {
+                map[i] = copy(now);
+                now = now->pt;
+            } else
+                continue;
+            map_node *here = map[i];
+            while (now != nullptr) {
+                here->pt = copy(now);
+                here = here->pt;
+                now = now->pt;
+            }
+        }
+        return *this;
     }
 
     class iterator {
@@ -335,6 +418,7 @@ public:
          * elements
          * add whatever you want
          */
+        map_node *pt;
         // --------------------------
         /**
          * the follows are constructors and destructors
@@ -342,11 +426,17 @@ public:
          */
         iterator()
         {
+            pt = nullptr;
         }
         iterator(const iterator &t)
         {
+            pt = t.pt;
         }
-        ~iterator() {}
+        iterator(const map_node *p)
+        {
+            pt = p;
+        }
+        ~iterator(){};
 
         /**
          * if point to nothing
@@ -354,6 +444,10 @@ public:
          */
         value_type &operator*() const
         {
+            if (pt != nullptr) {
+                return *pt->pv;
+            }
+            std::cerr << "dereference null pointer in hashmap iterator   ", throw "Fuck";
         }
 
         /**
@@ -361,23 +455,60 @@ public:
          */
         value_type *operator->() const noexcept
         {
+            return pt->pv;
         }
         bool operator==(const iterator &rhs) const
         {
+            return pt == rhs.pt;
         }
         bool operator!=(const iterator &rhs) const
         {
+            return pt != rhs.pt;
         }
     };
 
+    map_node *copy(const map_node *other)
+    {
+        map_node *res = new map_node(*other);
+        return res;
+    }
     void clear()
     {
+        for (int i = 0; i < capacity; ++i) {
+            map_node *now = map[i];
+            while (now != nullptr) {
+                map_node *temp = now;
+                now = now->pt;
+                delete temp;
+            }
+        }
+        delete[] map;
+        capacity_level = 0, capacity = 149, size = 0;
+        map = new map_node *[capacity];
     }
     /**
      * you need to expand the hashmap dynamically
      */
     void expand()
     {
+        capacity = prime[++capacity_level];
+        map_node **newmap = new map_node *[capacity];
+        for (int i = 0; i < capacity; ++i) {
+            map_node *now = map[i];
+            while (now != nullptr) {
+                value_type val = *now->pv;
+                size_t hash = h(val.first);
+                int map_loc = hash % capacity;
+                map_node *here = new map_node(hash, val.first, val.second);
+                here->pt = newmap[map_loc];
+                newmap[map_loc] = here;
+                map_node *temp = now;
+                now = now->pt;
+                delete temp;
+            }
+        }
+        delete[] map;
+        map = newmap;
     }
 
     /**
@@ -385,6 +516,7 @@ public:
      */
     iterator end() const
     {
+        return iterator();
     }
     /**
      * find, return a pointer point to the value
@@ -392,6 +524,16 @@ public:
      */
     iterator find(const Key &key) const
     {
+        size_t hash = h(key);
+        int map_loc = hash % capacity;
+        map_node *now = map[map_loc];
+        while (now != nullptr) {
+            if (e(key, now->pv->first)) {
+                return iterator(now);
+            }
+            now = now->pt;
+        }
+        return iterator();
     }
     /**
      * already have a value_pair with the same key
@@ -401,6 +543,30 @@ public:
      */
     sjtu::pair<iterator, bool> insert(const value_type &value_pair)
     {
+        ++size;
+        // expand();
+        if (1.0 * size / capacity >= max_ratio) {
+            expand();
+        }
+        size_t hash = h(value_pair.first);
+        int map_loc = hash % capacity;
+        sjtu::pair<iterator, bool> res;
+        map_node *now = map[map_loc];
+        while (now != nullptr) {
+            if (e(now->pv->first, value_pair.first)) {
+                res.second = 1;
+                res.first = iterator(now);
+                now->pv->second = value_pair.second;
+                return res;
+            }
+            now = now->pt;
+        }
+        map_node *new_node = new map_node(hash, value_pair.first, value_pair.second);
+        res.first = iterator(new_node);
+        new_node->pt = map[map_loc];
+        map[map_loc] = new_node;
+        res.second = 0;
+        return res;
     }
     /**
      * the value_pair exists, remove and return true
@@ -408,6 +574,27 @@ public:
      */
     bool remove(const Key &key)
     {
+        size_t hash = h(key);
+        int map_loc = hash % capacity;
+        map_node *now = map[map_loc];
+        --size;
+        if (e(key, now->pv->first)) {
+            map[map_loc] = now->pt;
+            delete now;
+            return 1;
+        }
+        map_node *last = now;
+        now = now->pt;
+        while (now != nullptr) {
+            if (e(key, now->pv->first)) {
+                last->pt = now->pt;
+                delete now;
+                return 1;
+            }
+            last = now;
+            now = now->pt;
+        }
+        return 0;
     }
 };
 
