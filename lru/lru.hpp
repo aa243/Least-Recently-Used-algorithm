@@ -336,12 +336,14 @@ public:
         ~map_node()
         {
             pt = nullptr, key_hash = 0;
+            // std::cout << "Yes" << pv->first << std::endl;
+            // if (pv == nullptr) std::cout << "NO!!!!" << std::endl;
             delete pv;
         }
     };
-    const int prime[] = {149, 379, 1361, 10067, 100189, 1000159, 10000019, 100000007, 1000000007, 10000000019};
+    const int prime[9] = {149, 379, 1361, 10067, 100189, 1000159, 10000019, 100000007, 1000000007};
     int capacity_level = 0, capacity = 149;
-    const int max_level = 9;
+    const int max_level = 8;
     const double max_ratio = 0.5;
     int size = 0;
     map_node **map;
@@ -356,13 +358,13 @@ public:
      */
     hashmap()
     {
-        map = new map_node *[capacity];
+        map = new map_node *[capacity]();
     }
     hashmap(const hashmap &other)
     {
         capacity_level = other.capacity_level, capacity = other.capacity;
         h = other.h, e = other.e, size = other.size;
-        map = new map_node *[capacity];
+        map = new map_node *[capacity]();
         for (int i = 0; i < capacity; ++i) {
             map_node *now = other.map[i];
             if (now != nullptr) {
@@ -392,9 +394,21 @@ public:
     }
     hashmap &operator=(const hashmap &other)
     {
+        for (int i = 0; i < capacity; ++i) {
+            map_node *now = map[i];
+            while (now != nullptr) {
+                map_node *temp = now;
+                now = now->pt;
+                std::cout << "fuck" << std::endl;
+                if (temp == nullptr) std::cout << "NO" << std::endl;
+                delete temp;
+                std::cout << "??" << std::endl;
+            }
+        }
+        delete[] map;
         capacity_level = other.capacity_level, capacity = other.capacity;
         h = other.h, e = other.e, size = other.size;
-        map = new map_node *[capacity];
+        map = new map_node *[capacity]();
         for (int i = 0; i < capacity; ++i) {
             map_node *now = other.map[i];
             if (now != nullptr) {
@@ -432,7 +446,7 @@ public:
         {
             pt = t.pt;
         }
-        iterator(const map_node *p)
+        iterator(map_node *p)
         {
             pt = p;
         }
@@ -484,16 +498,17 @@ public:
         }
         delete[] map;
         capacity_level = 0, capacity = 149, size = 0;
-        map = new map_node *[capacity];
+        map = new map_node *[capacity]();
     }
     /**
      * you need to expand the hashmap dynamically
      */
     void expand()
     {
+        int old_capacity = capacity;
         capacity = prime[++capacity_level];
-        map_node **newmap = new map_node *[capacity];
-        for (int i = 0; i < capacity; ++i) {
+        map_node **newmap = new map_node *[capacity]();
+        for (int i = 0; i < old_capacity; ++i) {
             map_node *now = map[i];
             while (now != nullptr) {
                 value_type val = *now->pv;
@@ -527,7 +542,9 @@ public:
         size_t hash = h(key);
         int map_loc = hash % capacity;
         map_node *now = map[map_loc];
+        // std::cout << "???" << std::endl;
         while (now != nullptr) {
+            if (now->pv == nullptr) std::cout << "OK!" << std::endl;
             if (e(key, now->pv->first)) {
                 return iterator(now);
             }
@@ -545,7 +562,7 @@ public:
     {
         ++size;
         // expand();
-        if (1.0 * size / capacity >= max_ratio) {
+        if (capacity_level < max_level && 1.0 * size / capacity >= max_ratio) {
             expand();
         }
         size_t hash = h(value_pair.first);
