@@ -91,10 +91,10 @@ public:
          * you can also add some if needed.
          */
         list_node* p = nullptr;
-        double_list* plist = nullptr;
+        const double_list* plist = nullptr;
         iterator(){};
         iterator(const iterator& t) { p = t.p, plist = t.plist; }
-        iterator(list_node* p1, double_list* p2)
+        iterator(list_node* p1, const double_list* p2)
             : p(p1)
             , plist(p2){};
         ~iterator(){};
@@ -104,14 +104,16 @@ public:
         iterator operator++(int)
         {
             if (plist != nullptr) {
-                if (p == nullptr) std::cerr << "end()++ ", throw "end()++";
+                // if (p == nullptr) std::cerr << "end()++ ", throw "end()++";
+                if (p == nullptr) throw "";
                 iterator temp = *this;
                 p = p->next;
                 return temp;
             }
             else
-                std::cerr << "Iterator is not bounded to a double_list. ",
-                    throw "Iterator is not bounded to a double_list.";
+                // std::cerr << "Iterator is not bounded to a double_list. ",
+                // throw "Iterator is not bounded to a double_list.";
+                throw "";
         }
         /**
          * ++iter
@@ -119,13 +121,15 @@ public:
         iterator& operator++()
         {
             if (plist != nullptr) {
-                if (p == nullptr) std::cerr << "end()++  ", throw "end()++";
+                // if (p == nullptr) std::cerr << "end()++  ", throw "end()++";
+                if (p == nullptr) throw "";
                 p = p->next;
                 return *this;
             }
             else
-                std::cerr << "Iterator is not bounded to a double_list. ",
-                    throw "Iterator is not bounded to a double_list.";
+                // std::cerr << "Iterator is not bounded to a double_list. ",
+                // throw "Iterator is not bounded to a double_list.";
+                throw "";
         }
         /**
          * iter--
@@ -133,7 +137,9 @@ public:
         iterator operator--(int)
         {
             if (plist != nullptr) {
-                if (p == plist->pbegin) p = nullptr, std::cerr << "begin()--  ", throw "begin()--";
+                // if (p == plist->pbegin) p = nullptr, std::cerr << "begin()--  ", throw
+                // "begin()--";
+                if (p == plist->pbegin) p = nullptr, throw "";
                 iterator temp = *this;
                 if (p != nullptr)
                     p = p->pre;
@@ -142,8 +148,9 @@ public:
                 return temp;
             }
             else
-                std::cerr << "Iterator is not bounded to a double_list.  ",
-                    throw "Iterator is not bounded to a double_list.";
+                // std::cerr << "Iterator is not bounded to a double_list.  ",
+                // throw "Iterator is not bounded to a double_list.";
+                throw "";
         }
         /**
          * --iter
@@ -151,7 +158,9 @@ public:
         iterator& operator--()
         {
             if (plist != nullptr) {
-                if (p == plist->pbegin) p = nullptr, std::cerr << "begin()--  ", throw "begin()--";
+                // if (p == plist->pbegin) p = nullptr, std::cerr << "begin()--  ", throw
+                // "begin()--";
+                if (p == plist->pbegin) p = nullptr, throw "";
                 if (p != nullptr)
                     p = p->pre;
                 else
@@ -159,8 +168,9 @@ public:
                 return *this;
             }
             else
-                std::cerr << "Iterator is not bounded to a double_list.  ",
-                    throw "Iterator is not bounded to a double_list.";
+                // std::cerr << "Iterator is not bounded to a double_list.  ",
+                // throw "Iterator is not bounded to a double_list.";
+                throw "";
         }
         /**
          * if the iter didn't point to a value
@@ -168,28 +178,32 @@ public:
          */
         T& operator*() const
         {
-            if (plist == nullptr || p == nullptr)
-                std::cerr << "Iterator point to null but is asked to dereference.  ",
-                    throw "Iterator point to null but is asked to dereference.";
+            // if (plist == nullptr || p == nullptr)
+            //     std::cerr << "Iterator point to null but is asked to dereference.  ",
+            //         throw "Iterator point to null but is asked to dereference.";
+            if (plist == nullptr || p == nullptr) throw "";
             return *p->pval;
         }
         /**
          * other operation
          */
         T* operator->() const noexcept { return p->pval; }
-        bool operator==(const iterator& rhs) const { return plist == rhs.plist && p == rhs.p; }
-        bool operator!=(const iterator& rhs) const { return !(plist == rhs.plist && p == rhs.p); }
+        bool operator==(const iterator& rhs) const
+        {
+            return (plist == rhs.plist && p == rhs.p) || (p == nullptr && rhs.p == nullptr);
+        }
+        bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
     };
     /**
      * return an iterator to the beginning
      */
-    iterator begin() { return iterator(pbegin, this); }
+    iterator begin() const { return iterator(pbegin, this); }
     /**
      * return an iterator to the ending
      * in fact, it returns the iterator point to nothing,
      * just after the last element.
      */
-    iterator end() { return iterator(nullptr, this); }
+    iterator end() const { return iterator(nullptr, this); }
     /**
      * if the iter didn't point to anything, do nothing,
      * otherwise, delete the element pointed by the iter
@@ -201,6 +215,8 @@ public:
      *  or nothing if the list after the operation
      *  don't contain 2nd elememt.
      */
+    iterator cbegin() const { return iterator(pbegin, this); }
+    iterator cend() const { return iterator(nullptr, this); }
     iterator erase(iterator pos)
     {
         if (pos.plist != this || pos.p == nullptr) return pos;
@@ -305,22 +321,24 @@ public:
     struct map_node
     {
         map_node* pt = nullptr;
-        size_t key_hash = 0;
         value_type* pv = nullptr;
-        map_node(size_t hash, const Key& key, const T& val)
+        map_node(const Key& key, const T& val)
         {
-            pt = nullptr, key_hash = hash;
+            pt = nullptr;
             pv = new value_type(key, val);
         }
         map_node(const map_node& other)
         {
-            pt = other.pt, key_hash = other.key_hash;
+            pt = other.pt;
             pv = new value_type(*other.pv);
         }
         ~map_node()
         {
-            pt = nullptr, key_hash = 0;
-            delete pv;
+            pt = nullptr;
+            if (pv != nullptr) {
+                delete pv;
+                pv = nullptr;
+            }
         }
     };
     const int prime[9] = {149, 379, 1361, 10067, 100189, 1000159, 10000019, 100000007, 1000000007};
@@ -411,7 +429,7 @@ public:
          * elements
          * add whatever you want
          */
-        map_node* pt;
+        const map_node* pt;
         // --------------------------
         /**
          * the follows are constructors and destructors
@@ -419,7 +437,7 @@ public:
          */
         iterator() { pt = nullptr; }
         iterator(const iterator& t) { pt = t.pt; }
-        iterator(map_node* p) { pt = p; }
+        iterator(const map_node* p) { pt = p; }
         ~iterator(){};
 
         /**
@@ -429,9 +447,10 @@ public:
         value_type& operator*() const
         {
             if (pt != nullptr) {
-                return *pt->pv;
+                return *(pt->pv);
             }
-            std::cerr << "dereference null pointer in hashmap iterator   ", throw "Fuck";
+            // std::cerr << "dereference null pointer in hashmap iterator   ", throw "Fuck";
+            throw "";
         }
 
         /**
@@ -439,10 +458,10 @@ public:
          */
         value_type* operator->() const noexcept { return pt->pv; }
         bool operator==(const iterator& rhs) const { return pt == rhs.pt; }
-        bool operator!=(const iterator& rhs) const { return pt != rhs.pt; }
+        bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
     };
 
-    map_node* copy(const map_node* other)
+    map_node* copy(const map_node* other) const
     {
         map_node* res = new map_node(*other);
         return res;
@@ -458,7 +477,7 @@ public:
             }
         }
         delete[] map;
-        capacity_level = 0, capacity = 149, size = 0;
+        capacity_level = 0, capacity = prime[capacity_level], size = 0;
         map = new map_node*[capacity]();
     }
     /**
@@ -472,15 +491,13 @@ public:
         for (int i = 0; i < old_capacity; ++i) {
             map_node* now = map[i];
             while (now != nullptr) {
-                value_type val = *now->pv;
+                value_type val = *(now->pv);
                 size_t hash = h(val.first);
                 int map_loc = hash % capacity;
-                map_node* here = new map_node(hash, val.first, val.second);
+                map_node* here = now;
                 here->pt = newmap[map_loc];
                 newmap[map_loc] = here;
-                map_node* temp = now;
                 now = now->pt;
-                delete temp;
             }
         }
         delete[] map;
@@ -500,15 +517,13 @@ public:
         size_t hash = h(key);
         int map_loc = hash % capacity;
         map_node* now = map[map_loc];
-        // std::cout << "???" << std::endl;
         while (now != nullptr) {
-            if (now->pv == nullptr) std::cout << "OK!" << std::endl;
             if (e(key, now->pv->first)) {
                 return iterator(now);
             }
             now = now->pt;
         }
-        return iterator();
+        return this->end();
     }
     /**
      * already have a value_pair with the same key
@@ -518,11 +533,7 @@ public:
      */
     sjtu::pair<iterator, bool> insert(const value_type& value_pair)
     {
-        ++size;
         // expand();
-        if (capacity_level < max_level && 1.0 * size / capacity >= max_ratio) {
-            expand();
-        }
         size_t hash = h(value_pair.first);
         int map_loc = hash % capacity;
         sjtu::pair<iterator, bool> res;
@@ -536,11 +547,15 @@ public:
             }
             now = now->pt;
         }
-        map_node* new_node = new map_node(hash, value_pair.first, value_pair.second);
+        ++size;
+        map_node* new_node = new map_node(value_pair.first, value_pair.second);
         res.first = iterator(new_node);
         new_node->pt = map[map_loc];
         map[map_loc] = new_node;
         res.second = 0;
+        if (capacity_level < max_level && 1.0 * size / capacity >= max_ratio) {
+            expand();
+        }
         return res;
     }
     /**
@@ -552,6 +567,7 @@ public:
         size_t hash = h(key);
         int map_loc = hash % capacity;
         map_node* now = map[map_loc];
+        if (now == nullptr) return 0;
         --size;
         if (e(key, now->pv->first)) {
             map[map_loc] = now->pt;
@@ -569,6 +585,7 @@ public:
             last = now;
             now = now->pt;
         }
+        ++size;
         return 0;
     }
 };
@@ -587,11 +604,15 @@ public:
         value_type* pv;
         linked_node* next;
         typename double_list<linked_node*>::iterator it;
-        linked_node() { pv = nullptr, next = nullptr; }
+        linked_node()
+        {
+            pv = nullptr, next = nullptr, it = typename double_list<linked_node*>::iterator();
+        }
         linked_node(value_type val)
         {
             pv = new value_type(val);
             next = nullptr;
+            it = typename double_list<linked_node*>::iterator();
         }
         linked_node(const linked_node& other)
         {
@@ -601,7 +622,8 @@ public:
         ~linked_node()
         {
             delete pv;
-            pv = next = nullptr;
+            pv = nullptr;
+            next = nullptr;
         }
     };
 
@@ -627,12 +649,17 @@ public:
          */
 
         typename double_list<linked_node*>::iterator it;
+        const linked_hashmap* pmap;
 
         // --------------------------
 
         iterator(){};
         iterator(const iterator& other)
-            : it(other.it){};
+            : it(other.it)
+            , pmap(other.pmap){};
+        iterator(typename double_list<linked_node*>::iterator other, const linked_hashmap* pm)
+            : it(other)
+            , pmap(pm){};
         ~iterator(){};
 
         /**
@@ -681,9 +708,9 @@ public:
          * operator to check whether two iterators are same (pointing to the same memory).
          */
         bool operator==(const iterator& rhs) const { return it == rhs.it; }
-        bool operator!=(const iterator& rhs) const { return it != rhs.it; }
+        bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
         bool operator==(const const_iterator& rhs) const { return it == rhs.it; }
-        bool operator!=(const const_iterator& rhs) const { return it != rhs.it; }
+        bool operator!=(const const_iterator& rhs) const { return !(*this == rhs); }
     };
 
     class const_iterator
@@ -694,12 +721,17 @@ public:
          * add whatever you want
          */
         typename double_list<linked_node*>::iterator it;
+        const linked_hashmap* pmap;
 
         // --------------------------
 
         const_iterator(){};
         const_iterator(const iterator& other)
-            : it(other.it){};
+            : it(other.it)
+            , pmap(other.pmap){};
+        const_iterator(typename double_list<linked_node*>::iterator other, const linked_hashmap* pm)
+            : it(other)
+            , pmap(pm){};
 
         /**
          * iter++
@@ -746,46 +778,166 @@ public:
         /**
          * operator to check whether two iterators are same (pointing to the same memory).
          */
-        bool operator==(const iterator& rhs) const { return it = rhs.it; }
-        bool operator!=(const iterator& rhs) const { return it != rhs.it; }
+        bool operator==(const iterator& rhs) const { return it == rhs.it; }
+        bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
         bool operator==(const const_iterator& rhs) const { return it == rhs.it; }
-        bool operator!=(const const_iterator& rhs) const { return it != rhs.it; }
+        bool operator!=(const const_iterator& rhs) const { return !(*this == rhs); }
     };
 
-    linked_hashmap() {}
-    linked_hashmap(const linked_hashmap& other) {}
-    ~linked_hashmap() {}
-    linked_hashmap& operator=(const linked_hashmap& other) {}
+    linked_node* copy(linked_node* other) { return new linked_node(*other); }
+    linked_hashmap()
+    {
+        map = new linked_node*[capacity]();
+        capacity = 149, capacity_level = 0;
+    }
+    linked_hashmap(const linked_hashmap& other)
+    {
+        sz = other.sz, capacity = other.capacity, capacity_level = other.capacity_level;
+        map = new linked_node*[capacity]();
+        for (auto it = other.list.cbegin(); it != other.list.cend(); ++it) {
+            linked_node* newnode = copy(*it);
+            list.insert_tail(newnode);
+            Key key = newnode->pv->first;
+            size_t hash = h(key);
+            int map_loc = hash % capacity;
+            newnode->next = map[map_loc];
+            map[map_loc] = newnode;
+            newnode->it = --list.end();
+        }
+    }
+    ~linked_hashmap()
+    {
+        for (auto it = list.begin(); it != list.end(); ++it) {
+            delete *it;
+        }
+        delete[] map;
+    }
+    linked_hashmap& operator=(const linked_hashmap& other)
+    {
+        for (auto it = list.begin(); it != list.end(); ++it) {
+            delete *it;
+        }
+        delete[] map;
+        sz = other.sz, capacity = other.capacity, capacity_level = other.capacity_level;
+        map = new linked_node*[capacity]();
+        while (!list.empty()) list.delete_head();
+        for (auto it = other.list.cbegin(); it != other.list.cend(); ++it) {
+            linked_node* newnode = copy(*it);
+            list.insert_tail(newnode);
+            Key key = newnode->pv->first;
+            size_t hash = h(key);
+            int map_loc = hash % capacity;
+            newnode->next = map[map_loc];
+            map[map_loc] = newnode;
+            newnode->it = --list.end();
+        }
+        return *this;
+    }
 
     /**
      * return the value connected with the Key(O(1))
      * if the key not found, throw
      */
-    T& at(const Key& key) {}
-    const T& at(const Key& key) const {}
-    T& operator[](const Key& key) {}
-    const T& operator[](const Key& key) const {}
+    T& at(const Key& key)
+    {
+        size_t hash = h(key);
+        int map_loc = hash % capacity;
+        linked_node* now = map[map_loc];
+        while (now != nullptr) {
+            if (e(key, now->pv->first)) {
+                return now->pv->second;
+            }
+            now = now->next;
+        }
+        // std::cerr << "can't find the value in at function    ", throw "fuck you";
+        throw "";
+    }
+    const T& at(const Key& key) const
+    {
+        size_t hash = h(key);
+        int map_loc = hash % capacity;
+        linked_node* now = map[map_loc];
+        while (now != nullptr) {
+            if (e(key, now->pv->first)) {
+                return now->pv->second;
+            }
+            now = now->pt;
+        }
+        // std::cerr << "can't find the value in at function    ", throw "fuck you";
+        throw "";
+    }
+    T& operator[](const Key& key)
+    {
+        size_t hash = h(key);
+        int map_loc = hash % capacity;
+        linked_node* now = map[map_loc];
+        while (now != nullptr) {
+            if (e(key, now->pv->first)) {
+                return now->pv->second;
+            }
+            now = now->next;
+        }
+        // std::cerr << "can't find the value in at function    ", throw "fuck you";
+        throw "";
+    }
+    const T& operator[](const Key& key) const
+    {
+        size_t hash = h(key);
+        int map_loc = hash % capacity;
+        linked_node* now = map[map_loc];
+        while (now != nullptr) {
+            if (e(key, now->pv->first)) {
+                return now->pv->second;
+            }
+            now = now->pt;
+        }
+        // std::cerr << "can't find the value in at function    ", throw "fuck you";
+        throw "";
+    }
 
     /**
      * return an iterator point to the first
      * inserted and existed element
      */
-    iterator begin() {}
-    const_iterator cbegin() const {}
+    iterator begin() const { return iterator(list.begin(), this); }
+    const_iterator cbegin() const { return const_iterator(list.cbegin(), this); }
     /**
      * return an iterator after the last inserted element
      */
-    iterator end() {}
-    const_iterator cend() const {}
+    iterator end() const { return iterator(list.end(), this); }
+    const_iterator cend() const { return const_iterator(list.cend(), this); }
     /**
      * if didn't contain anything, return true,
      * otherwise false.
      */
-    bool empty() const {}
+    bool empty() const { return sz == 0; }
 
-    void clear() {}
+    void clear()
+    {
+        for (auto it = list.begin(); it != list.end(); ++it) {
+            delete *it;
+        }
+        delete[] map;
+        map = new linked_node*[capacity]();
+        sz = 0, capacity_level = 0, capacity = prime[capacity_level];
+        while (!list.empty()) list.delete_head();
+    }
+    void expand()
+    {
+        capacity = prime[++capacity_level];
+        linked_node** newmap = new linked_node*[capacity]();
+        for (auto it = list.begin(); it != list.end(); ++it) {
+            Key key = (*it)->pv->first;
+            size_t hash = h(key);
+            int loc = hash % capacity;
+            (*it)->next = newmap[loc];
+            newmap[loc] = *it;
+        }
+        delete[] map;
+        map = newmap;
+    }
 
-    size_t size() const {}
+    size_t size() const { return sz; }
     /**
      * insert the value_piar
      * if the key of the value_pair exists in the map
@@ -796,51 +948,169 @@ public:
      * if the key of the value_pair doesn't exist in the map
      * add a new element and return true
      */
-    pair<iterator, bool> insert(const value_type& value) {}
+    pair<iterator, bool> insert(const value_type& value)
+    {
+        size_t hash = h(value.first);
+        ++sz;
+        if (capacity_level < max_level && 1.0 * sz / capacity >= max_ratio) expand();
+        int loc = hash % capacity;
+        linked_node* now = map[loc];
+        pair<iterator, bool> res(this->end(), 1);
+        while (now != nullptr) {
+            if (e(value.first, now->pv->first)) {
+                res.second = 0;
+                now->pv->second = value.second;
+                list.erase(now->it);
+                list.insert_tail(now);
+                now->it = --list.end();
+                res.first = iterator(now->it, this);
+                return res;
+            }
+            now = now->next;
+        }
+        linked_node* newnode = new linked_node(value);
+        list.insert_tail(newnode);
+        newnode->it = --list.end();
+        newnode->next = map[loc];
+        map[loc] = newnode;
+        res.first = iterator(newnode->it, this);
+        return res;
+    }
     /**
      * erase the value_pair pointed by the iterator
      * if the iterator points to nothing
      * throw
      */
-    void remove(iterator pos) {}
+    void remove(iterator pos)
+    {
+        if (pos.pmap != this || pos == this->end()) {
+            // std::cerr << "tring to remove null iterator in linked_hashmap   ", throw "fuck";
+            throw "";
+        }
+        --sz;
+        Key key = pos->first;
+        size_t hash = h(key);
+        int loc = hash % capacity;
+        list.erase(pos.it);
+        linked_node *now = map[loc], *last = map[loc];
+        if (e(now->pv->first, key)) {
+            map[loc] = now->next;
+            delete now;
+            return;
+        }
+        now = now->next;
+        while (now != nullptr) {
+            if (e(now->pv->first, key)) {
+                last->next = now->next;
+                delete now;
+                return;
+            }
+            last = now, now = now->next;
+        }
+    }
     /**
      * return how many value_pairs consist of key
      * this should only return 0 or 1
      */
-    size_t count(const Key& key) const {}
+    size_t count(const Key& key) const
+    {
+        size_t hash = h(key);
+        int loc = hash % capacity;
+        linked_node* now = map[loc];
+        while (now != nullptr) {
+            if (e(key, now->pv->first)) return 1;
+            now = now->next;
+        }
+        return 0;
+    }
     /**
      * find the iterator points at the value_pair
      * which consist of key
      * if not find, return the iterator
      * point at nothing
      */
-    iterator find(const Key& key) {}
+    iterator find(const Key& key) const
+    {
+        size_t hash = h(key);
+        int loc = hash % capacity;
+        linked_node* now = map[loc];
+        while (now != nullptr) {
+            if (e(key, now->pv->first)) {
+                // list.erase(now->it);
+                // list.insert_head(now);
+                // now->it = list.begin();
+                return iterator(now->it, this);
+            }
+            now = now->next;
+        }
+        return this->end();
+    }
 };
 
 class lru
 {
     using lmap = sjtu::linked_hashmap<Integer, Matrix<int>, Hash, Equal>;
     using value_type = sjtu::pair<const Integer, Matrix<int>>;
+    lmap* m;
+    int mxsize = 0, sz = 0;
 
 public:
-    lru(int size) {}
-    ~lru() {}
+    lru(int size)
+    {
+        mxsize = size;
+        m = new lmap();
+    }
+    ~lru() { delete m; };
     /**
      * save the value_pair in the memory
      * delete something in the memory if necessary
      */
-    void save(const value_type& v) const {}
+    void save(const value_type& v)
+    {
+        auto it = m->find(v.first);
+        if (it != m->end()) {
+            m->remove(it);
+            m->insert(v);
+        }
+        else {
+            if (sz == mxsize) {
+                m->remove(m->begin());
+                m->insert(v);
+            }
+            else {
+                m->insert(v);
+                ++sz;
+            }
+        }
+    }
     /**
      * return a pointer contain the value
      */
-    Matrix<int>* get(const Integer& v) const {}
+    Matrix<int>* get(const Integer& v) const
+    {
+        auto it = m->find(v);
+        if (it == m->end())
+            return nullptr;
+        else {
+            value_type temp(*it);
+            m->remove(it);
+            m->insert(temp);
+            return &((*(--m->end())).second);
+        }
+    }
     /**
      * just print everything in the memory
      * to debug or test.
      * this operation follows the order, but don't
      * change the order.
      */
-    void print() {}
+    void print()
+    {
+        sjtu::linked_hashmap<Integer, Matrix<int>, Hash, Equal>::iterator it;
+        for (it = m->begin(); it != m->end(); it++) {
+            std::cout << (*it).first.val << " " << (*it).second << std::endl;
+        }
+    }
 };
 }   // namespace sjtu
 

@@ -6,12 +6,11 @@ BOOM :)
 #include <cassert>
 #include <iostream>
 #include <string>
-using namespace std;
 // if this is 1, output yes or no
 // otherwise, output the exact num
 #define STATUS 0
 
-std::string c[] = {
+std::string c[]={
     "   pass!",
     "   error.",
     "test1: constructor",
@@ -20,26 +19,23 @@ std::string c[] = {
     "test4: find & correctness of insert and remove",
     "test6: clear",
     "Congratulations. Your submission has passed all correctness tests. Good job! :)",
-    "test5: constructor(), ="};
+    "test5: constructor(), =",
+    "test7: memcheck",
+    "test value_type: <Integer,Integer>",//c[10]
+    "test value_type: <Integer,Matrix<int> >",//c[11]
+};
 
-bool exists(sjtu::hashmap<int, int> map, sjtu::hashmap<int, int>::iterator i)
+bool equal(Integer a, Integer b)
 {
-    return i != map.end();
-}
-
-bool equal(int a, int b)
-{
-    return a == b;
+    return a.val == b.val;
 }
 
 void integer_hashmap_memcheck_tester()
 {
-    cerr << "###A" << endl;
-    using value_type = sjtu::pair<int, int>;
-    using mp = sjtu::hashmap<int, int>;
-    const int n = 100000;
+    using value_type = sjtu::pair<Integer, Integer>;
+    using mp = sjtu::hashmap<Integer, Integer, Hash, Equal>;
+    const int n = 10000;
     // test: constructor
-    cerr << "###" << endl;
     if (STATUS) std::cout << c[2];
     mp map;
     if (STATUS) std::cout << c[0] << std::endl;
@@ -47,26 +43,26 @@ void integer_hashmap_memcheck_tester()
     // test: insert and expand
     if (STATUS) std::cout << c[3];
     for (int i = 0; i < n; i++) {
-        map.insert(value_type(i, i));
+        map.insert(value_type(Integer(i), Integer(i)));
     }
     for (int i = 0; i < n; i += 4) {
-        map.insert(value_type(i, 4 * i));
+        map.insert(value_type(Integer(i), Integer(4 * i)));
     }
     if (STATUS) std::cout << c[0] << std::endl;
 
     // test: remove
     if (STATUS) std::cout << c[4];
     for (int i = 0; i < n; i += 3) {
-        map.remove(i);
+        map.remove(Integer(i));
     }
     if (STATUS) std::cout << c[0] << std::endl;
 
     // test: find
     if (STATUS) std::cout << c[5];
     for (int i = 0; i < n; i++) {
-        mp::iterator it = map.find(i);
+        mp::iterator it = map.find(Integer(i));
         if (STATUS == 0) {
-            if (it != map.end()) std::cout << (*it).second << std::endl;
+            if (it != map.end()) std::cout << (*it).second.val << std::endl;
         }
         if (i % 3 == 0) {
             if (it != map.end()) {
@@ -75,13 +71,13 @@ void integer_hashmap_memcheck_tester()
             }
         }
         else if (i % 4 == 0) {
-            if (!equal(4 * i, (*it).second)) {
+            if (!equal(Integer(4 * i), (*it).second)) {
                 std::cout << c[1] << std::endl;
                 exit(0);
             }
         }
         else {
-            if (!equal(i, (*it).second)) {
+            if (!equal(Integer(i), (*it).second)) {
                 std::cout << c[1] << std::endl;
                 exit(0);
             }
@@ -95,7 +91,7 @@ void integer_hashmap_memcheck_tester()
     map2.clear();
     map2 = map;
     for (int i = 0; i < n; i++) {
-        mp::iterator it = map2.find(i);
+        mp::iterator it = map2.find(Integer(i));
         if (i % 3 == 0) {
             if (it != map2.end()) {
                 std::cout << c[1] << std::endl;
@@ -103,13 +99,103 @@ void integer_hashmap_memcheck_tester()
             }
         }
         else if (i % 4 == 0) {
-            if (!equal(4 * i, (*it).second)) {
+            if (!equal(Integer(4 * i), (*it).second)) {
                 std::cout << c[1] << std::endl;
                 exit(0);
             }
         }
         else {
-            if (!equal(i, (*it).second)) {
+            if (!equal(Integer(i), (*it).second)) {
+                std::cout << c[1] << std::endl;
+                exit(0);
+            }
+        }
+    }
+    if (STATUS) std::cout << c[0] << std::endl;
+
+    // test: clear
+    if (STATUS) std::cout << c[6];
+    map.clear();
+    map.clear();
+    if (STATUS) std::cout << c[0] << std::endl;
+}
+
+void big_hashmap_tester()
+{
+    using value_type = sjtu::pair<Integer, Matrix<int>>;
+    using mp = sjtu::hashmap<Integer, Matrix<int>, Hash, Equal>;
+    const int n = 100000;
+    // test: constructor
+    if (STATUS) std::cout << c[2];
+    mp map;
+    if (STATUS) std::cout << c[0] << std::endl;
+
+    // test: insert and expand
+    if (STATUS) std::cout << c[3];
+    for (int i = 0; i < n; i++) {
+        map.insert(value_type(Integer(i), Matrix<int>(2, 2, i)));
+    }
+    for (int i = 0; i < n; i += 4) {
+        map.insert(value_type(Integer(i), Matrix<int>(2, 2, 4 * i)));
+    }
+    if (STATUS) std::cout << c[0] << std::endl;
+
+    // test: remove
+    if (STATUS) std::cout << c[4];
+    for (int i = 0; i < n; i += 3) {
+        map.remove(Integer(i));
+    }
+    if (STATUS) std::cout << c[0] << std::endl;
+
+    // test: find
+    if (STATUS) std::cout << c[5];
+    for (int i = 0; i < n; i++) {
+        mp::iterator it = map.find(Integer(i));
+        if (STATUS == 0) {
+            if (it != map.end()) std::cout << (*it).second << std::endl;
+        }
+        if (i % 3 == 0) {
+            if (it != map.end()) {
+                std::cout << c[1] << std::endl;
+                exit(0);
+            }
+        }
+        else if (i % 4 == 0) {
+            if (!(Matrix<int>(2, 2, 4 * i) == (*it).second)) {
+                std::cout << c[1] << std::endl;
+                exit(0);
+            }
+        }
+        else {
+            if (!(Matrix<int>(2, 2, i) == (*it).second)) {
+                std::cout << c[1] << std::endl;
+                exit(0);
+            }
+        }
+    }
+    if (STATUS) std::cout << c[0] << std::endl;
+
+    // test: constructor(), =
+    if (STATUS) std::cout << c[8];
+    mp map2(map);
+    map2.clear();
+    map2 = map;
+    for (int i = 0; i < n; i++) {
+        mp::iterator it = map2.find(Integer(i));
+        if (i % 3 == 0) {
+            if (it != map2.end()) {
+                std::cout << c[1] << std::endl;
+                exit(0);
+            }
+        }
+        else if (i % 4 == 0) {
+            if (!(Matrix<int>(2, 2, 4 * i) == (*it).second)) {
+                std::cout << c[1] << std::endl;
+                exit(0);
+            }
+        }
+        else {
+            if (!(Matrix<int>(2, 2, i) == (*it).second)) {
                 std::cout << c[1] << std::endl;
                 exit(0);
             }
@@ -126,7 +212,22 @@ void integer_hashmap_memcheck_tester()
 
 int main()
 {
-    cerr << "###" << endl;
+#ifdef _OUTPUT_
+    freopen("2.out", "w", stdout);
+#endif
+    std::cout << c[10] << std::endl;
     integer_hashmap_memcheck_tester();
+    std::cout << c[11] << std::endl;
+    big_hashmap_tester();
+    if (STATUS) {
+        std::cout << c[9];
+        if (Integer::counter == 0) {
+            std::cout << c[0] << std::endl;
+        }
+        else {
+            std::cout << c[1] << std::endl;
+            exit(0);
+        }
+    }
     std::cout << c[7] << std::endl;
 }
